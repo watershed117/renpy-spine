@@ -1,0 +1,29 @@
+Spine Runtimes License Agreement
+Last updated November 14, 2026. Replaces all prior versions.
+
+Copyright (c) 2013-2026, Esoteric Software LLC
+
+You may integrate the Spine Runtimes into software or otherwise create
+derivative works of the Spine Runtimes (collectively, "Products"), provided
+that:
+   (a) each user of the Products obtains their own Spine Editor
+   license, unless you have licensed the Spine Editor and
+   comply with Section 2 of the Spine Editor License Agreement
+   (https://esotericsoftware.com/spine-editor-license);
+   (b) Products made available to others do not substitute for the Spine Editor
+   in creating or editing skeletons or animations for the Spine Runtimes; and
+   (c) redistribution of the Products in any form includes this license and
+   copyright notice.
+A user is any person or entity that uses a Product other than to integrate
+or evaluate the Spine Runtimes.
+
+THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

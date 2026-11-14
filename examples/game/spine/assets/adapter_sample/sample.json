@@ -1,0 +1,130 @@
+{
+  "skeleton": {
+    "spine": "3.8.99",
+    "hash": "renpy-spine-original-geometric-fixture"
+  },
+  "bones": [
+    {
+      "name": "root"
+    },
+    {
+      "name": "body",
+      "parent": "root"
+    },
+    {
+      "name": "pointer",
+      "parent": "root"
+    }
+  ],
+  "slots": [
+    {
+      "name": "box",
+      "bone": "body",
+      "attachment": "box",
+      "color": "48b4f0ff"
+    },
+    {
+      "name": "marker",
+      "bone": "pointer",
+      "attachment": "marker",
+      "color": "ffe484ff"
+    }
+  ],
+  "skins": [
+    {
+      "name": "default",
+      "attachments": {
+        "box": {
+          "box": {
+            "type": "region",
+            "path": "white",
+            "width": 64,
+            "height": 64
+          }
+        },
+        "marker": {
+          "marker": {
+            "type": "region",
+            "path": "white",
+            "width": 8,
+            "height": 8
+          }
+        }
+      }
+    }
+  ],
+  "events": {
+    "tap": {
+      "int": 1
+    }
+  },
+  "animations": {
+    "idle": {
+      "bones": {
+        "body": {
+          "rotate": [
+            {
+              "time": 0,
+              "angle": -8
+            },
+            {
+              "time": 1,
+              "angle": 8
+            },
+            {
+              "time": 2,
+              "angle": -8
+            }
+          ]
+        }
+      }
+    },
+    "touch": {
+      "bones": {
+        "body": {
+          "scale": [
+            {
+              "time": 0,
+              "x": 1,
+              "y": 1
+            },
+            {
+              "time": 0.15,
+              "x": 1.25,
+              "y": 0.85
+            },
+            {
+              "time": 0.5,
+              "x": 1.25,
+              "y": 0.85
+            }
+          ]
+        }
+      },
+      "events": [
+        {
+          "time": 0.1,
+          "name": "tap"
+        }
+      ]
+    },
+    "touch_end": {
+      "bones": {
+        "body": {
+          "scale": [
+            {
+              "time": 0,
+              "x": 1.25,
+              "y": 0.85
+            },
+            {
+              "time": 0.2,
+              "x": 1,
+              "y": 1
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+renpy-spine
+Copyright (c) 2026 renpy-spine contributors.
+
+Original adapter code, the bridge, tools, and geometric sample are provided
+under the conditions of the Spine Runtimes License Agreement in LICENSE.
+This is not a grant to use Spine Runtimes independently of their license.
+This project is not affiliated with or endorsed by Esoteric Software or Ren'Py.
+Spine is a trademark of Esoteric Software LLC.
+
+The official Spine C runtime is NOT included in this repository or source ZIP.
+The downloader retrieves it from Esoteric Software's repository at commit:
+8b4844bd4b193ba9e54487ed397a777993cbad56 (3.8).
+Its file hashes are recorded in game/tools/spine/runtime-lock.json.
+The original May 1, 2019 license is preserved in LICENSES/Spine-Runtimes-3.8.txt.
+The official current license retrieved November 14, 2026 is preserved in LICENSE.
+See docs/LICENSING.md for the different scope of these documents.
+
+No third-party character artwork, voices, music, editor files, or precompiled
+runtime binaries are distributed. The geometric sample is original test data.
+Ren'Py, compiler toolchains, and Android SDK/NDK are installed separately and
+remain subject to their respective licenses.
