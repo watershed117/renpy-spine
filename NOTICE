@@ -7,15 +7,23 @@ This is not a grant to use Spine Runtimes independently of their license.
 This project is not affiliated with or endorsed by Esoteric Software or Ren'Py.
 Spine is a trademark of Esoteric Software LLC.
 
-The official Spine C runtime is NOT included in this repository or source ZIP.
-The downloader retrieves it from Esoteric Software's repository at commit:
+Official runtime source files are NOT included in this repository or source ZIP.
+Platform Release ZIPs include compiled runtimes and their license notices.
+The downloader retrieves pinned sources from Esoteric Software's repository:
 8b4844bd4b193ba9e54487ed397a777993cbad56 (3.8).
-Its file hashes are recorded in game/tools/spine/runtime-lock.json.
+425ce416bb218b28caeec47b317aa57cd7140375 (4.0).
+77a5db0ec6d16331f5efbaa7662bba9355bd3424 (4.1).
+5cb78e77d3711ddcd80c7bd043bb11cf70fcc88c (4.2).
+405f43295b5832e86d9df3a80beb6bc9df772312 (4.3, C++).
+File hashes are recorded in game/tools/spine/runtime-lock*.json.
 The original May 1, 2019 license is preserved in LICENSES/Spine-Runtimes-3.8.txt.
 The official current license retrieved November 14, 2026 is preserved in LICENSE.
 See docs/LICENSING.md for the different scope of these documents.
 
-No third-party character artwork, voices, music, editor files, or precompiled
-runtime binaries are distributed. The geometric sample is original test data.
+No third-party character artwork, voices, music, or editor files are distributed.
+The geometric sample is original test data. Official example exports are fetched
+only for tests and are excluded from the source and platform Release ZIPs.
+Pinned 4.x license texts are preserved in LICENSES/Spine-Runtimes-4.x.txt and
+game/spine/SPINE-RUNTIME-4.x-LICENSE.txt. All Spine licensing conditions apply.
 Ren'Py, compiler toolchains, and Android SDK/NDK are installed separately and
 remain subject to their respective licenses.

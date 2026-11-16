@@ -1,3 +1,1 @@
-"""Ren'Py Spine 3.8 integration. See the repository LICENSE and NOTICE."""
-
-__version__ = "0.1.0"
+"""Project-local Spine 3.8 and 4.0-4.3 integration. No engine files are modified."""

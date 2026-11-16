@@ -1,6 +1,6 @@
 # 动画、输入与事件
 
-`spine_runtime.rpy` 向 Ren’Py store 注册 `Spine`、`SpineInteraction`、`TouchRegion` 和 `PointerBinding`。先完成 README 中的源码构建。
+`spine_runtime.rpy` 向 Ren’Py store 注册 `Spine`、`SpineInteraction`、`TouchRegion` 和 `PointerBinding`。先安装 Release 或完成 README 中的源码构建。3.8、4.0、4.1、4.2、4.3 共用相同 API，按资源内部版本自动选择后端。
 
 ## Spine
 
@@ -38,6 +38,8 @@ actor.bone_to_canvas("root", 0, 0)
 轨道为 0–31。非循环动画结束会保留最终姿势；临时表情等叠加轨道应排队空动画以释放覆盖。`queue_empty` 的 delay 是排队时间语义；希望先播完整个叠加动画，可以显式传入它的时长。
 
 骨骼可覆盖 `x/y/rotation/scale_x/scale_y/shear_x/shear_y`。覆盖发生在应用动画后、世界变换与约束求解前。IK 等约束仍可能影响最终结果。
+
+3.8 保留原来的紧凑存档快照；4.x 保存压缩操作记录，加载时重放以还原混合、附件序列和物理状态，过去事件不会重复触发。4.x 的记录内存和恢复时间随实例累计操作增长；不保证长时间播放后的读档耗时固定。临时鼠标/触摸覆盖在显示对象恢复时释放。请使用封装 API，直接修改 `native.lib` 不会进入 4.x 记录。
 
 ## 触摸和追踪
 

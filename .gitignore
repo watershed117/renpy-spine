@@ -1,5 +1,7 @@
 # Generated runtime sources and native builds are fetched/built locally.
 game/tools/spine/vendor/
+game/tools/spine/vendor-*/
+game/tools/spine/fixtures/
 game/tools/spine/toolchains/
 game/spine/native/
 game/.spine-check/
@@ -25,6 +27,7 @@ __pycache__/
 .env.*
 local.properties
 dist/
+reports/
 build/
 tmp/
 .DS_Store

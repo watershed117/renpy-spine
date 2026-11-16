@@ -17,6 +17,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[2]
 LIBRARIES = ROOT / 'spine' / 'native' / 'android'
 ABIS = ('arm64-v8a', 'armeabi-v7a', 'x86_64')
+NAMES = ('librenpy_spine.so',) + tuple('librenpy_spine_4_%d.so' % i for i in range(4))
 
 
 def inspect_package(filename):
@@ -39,9 +40,10 @@ def inject_package(source, destination, libraries=LIBRARIES):
         raise ValueError('Output must differ from the original package')
     prefix, abis = inspect_package(source)
     for abi in abis:
-        if not (libraries / abi / 'librenpy_spine.so').is_file():
-            raise FileNotFoundError('Build the native Spine library for '+abi)
-    paths = {prefix+'lib/'+abi+'/librenpy_spine.so': libraries/abi/'librenpy_spine.so' for abi in abis}
+        for name in NAMES:
+            if not (libraries / abi / name).is_file():
+                raise FileNotFoundError('Build the native Spine library for '+abi+': '+name)
+    paths = {prefix+'lib/'+abi+'/'+name: libraries/abi/name for abi in abis for name in NAMES}
     signature = re.compile(r'^META-INF/(?:[^/]+\.(?:SF|RSA|DSA|EC)|MANIFEST\.MF)$', re.IGNORECASE)
     with zipfile.ZipFile(source) as original, zipfile.ZipFile(destination, 'w', allowZip64=True) as output:
         for info in original.infolist():
@@ -60,11 +62,12 @@ def verify_package(filename, libraries=LIBRARIES):
     prefix, abis = inspect_package(filename)
     with zipfile.ZipFile(filename) as package:
         for abi in abis:
-            name=prefix+'lib/'+abi+'/librenpy_spine.so'
-            if package.read(name) != (libraries/abi/'librenpy_spine.so').read_bytes():
-                raise ValueError('Runtime bytes differ for '+abi)
-            if package.getinfo(name).compress_type != zipfile.ZIP_STORED:
-                raise ValueError('Runtime must be stored uncompressed: '+abi)
+            for library_name in NAMES:
+                name=prefix+'lib/'+abi+'/'+library_name
+                if package.read(name) != (libraries/abi/library_name).read_bytes():
+                    raise ValueError('Runtime bytes differ for '+abi+': '+library_name)
+                if package.getinfo(name).compress_type != zipfile.ZIP_STORED:
+                    raise ValueError('Runtime must be stored uncompressed: '+abi+': '+library_name)
     return abis
 
 

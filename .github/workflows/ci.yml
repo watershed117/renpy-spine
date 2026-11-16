@@ -1,0 +1,171 @@
+name: Build, test and release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - id: msys2
+        uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2.33.0
+        with:
+          msystem: MINGW64
+          install: mingw-w64-x86_64-gcc
+      - name: Add MinGW to PATH
+        shell: pwsh
+        env:
+          MSYS2_LOCATION: ${{ steps.msys2.outputs.msys2-location }}
+        run: Join-Path $env:MSYS2_LOCATION 'mingw64/bin' | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Fetch and verify pinned sources and official fixtures
+        shell: pwsh
+        run: |
+          node game/tools/spine/fetch-runtime.cjs
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          node game/tools/spine/fetch-multiversion.cjs
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          node game/tools/spine/fetch-multiversion.cjs --fixtures
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Compile all Windows backends
+        shell: pwsh
+        run: |
+          ./game/tools/spine/build-native.ps1 -Target windows
+          ./game/tools/spine/build-multiversion.ps1 -Target windows
+      - name: Test animation, snapshots, events and binary dependencies
+        shell: pwsh
+        run: |
+          python tests/native-smoke.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python tests/native-multiversion.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python tests/audit-native.py --target windows
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -m compileall -q game/python-packages tests tools
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-native
+          path: game/spine/native/windows-x86_64/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: windows-reports
+          path: reports/
+
+  android:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - name: Select Android NDK r28c
+        shell: pwsh
+        run: |
+          $sdk = $env:ANDROID_HOME
+          if (-not $sdk) { $sdk = $env:ANDROID_SDK_ROOT }
+          if (-not $sdk) { throw 'Android SDK is missing from this runner.' }
+          $ndk = Join-Path $sdk 'ndk/28.2.13676358'
+          if (-not (Test-Path (Join-Path $ndk 'source.properties'))) {
+            & (Join-Path $sdk 'cmdline-tools/latest/bin/sdkmanager.bat') --install 'ndk;28.2.13676358'
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          }
+          "ANDROID_NDK_HOME=$ndk" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Fetch pinned runtime sources
+        shell: pwsh
+        run: |
+          node game/tools/spine/fetch-runtime.cjs
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          node game/tools/spine/fetch-multiversion.cjs
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Compile five backends for three Android ABIs
+        shell: pwsh
+        run: |
+          ./game/tools/spine/build-native.ps1 -Target android -Ndk $env:ANDROID_NDK_HOME
+          ./game/tools/spine/build-multiversion.ps1 -Target android -Ndk $env:ANDROID_NDK_HOME
+      - name: Audit 16 KB ELF alignment and test APK/AAB injection
+        shell: pwsh
+        run: |
+          python tests/audit-native.py --target android
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python tests/android-package.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: android-native
+          path: game/spine/native/android/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: android-reports
+          path: reports/
+
+  package:
+    needs: [windows, android]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: windows-native
+          path: game/spine/native/windows-x86_64/
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: android-native
+          path: game/spine/native/android/
+      - name: Build and verify allowlisted release archives
+        run: python tools/package-release.py
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-assets
+          path: dist/
+          if-no-files-found: error
+
+  release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-assets
+          path: dist/
+      - name: Publish the tested assets as a GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node tools/publish-release.cjs

@@ -1,9 +1,8 @@
 """Real-time Spine displayable using Ren'Py's existing model renderer.
 
 GPU mesh objects and ctypes handles live in a transient weak cache. Save files
-contain only strings, numbers, and the versioned, pointer-free track snapshot.
+contain only strings, numbers, and versioned snapshots without native pointers.
 """
-import array
 import ctypes as C
 import math
 import os
@@ -13,9 +12,10 @@ import renpy
 import renpy.exports as exports
 from renpy.display.displayable import Displayable
 from renpy.display.render import Render
-from renpy_spine.native import Native, load_library
+from renpy_spine.native import Native, load_library, skeleton_version, runtime_version
 
 _library = None
+_libraries = {}
 _layout = None
 _sessions = weakref.WeakKeyDictionary()
 
@@ -43,12 +43,16 @@ def register():
     )
 
 
-def library():
+def library(version='3.8'):
     global _library
-    if _library is None:
+    if version not in ('3.8', '4.0', '4.1', '4.2', '4.3'):
+        raise ValueError('Unsupported Spine runtime: ' + version)
+    if version not in _libraries:
+        android_name = 'librenpy_spine.so' if version == '3.8' else 'librenpy_spine_%s.so' % version.replace('.', '_')
+        windows_name = 'renpy_spine_v1c.dll' if version == '3.8' else 'renpy_spine_%s.dll' % version.replace('.', '_')
         if renpy.android:
             try:
-                _library = load_library("librenpy_spine.so")
+                loaded = load_library(android_name)
             except OSError:
                 # RAPT uses extracted native libraries. Never dlopen an asset
                 # copied into writable game/cache directories on Android.
@@ -56,17 +60,22 @@ def library():
                 activity = autoclass("org.renpy.android.PythonSDLActivity").mActivity
                 folder = str(activity.getApplicationInfo().nativeLibraryDir)
                 try:
-                    _library = load_library(os.path.join(folder, "librenpy_spine.so"))
+                    loaded = load_library(os.path.join(folder, android_name))
                 except OSError as error:
                     raise RuntimeError("Spine native library is missing from this APK. "
                                        "Run tools/spine/package-android.py after the Ren'Py Android build.") from error
         elif renpy.windows:
-            _library = load_library(os.path.join(renpy.config.gamedir, "spine", "native",
-                                                 "windows-x86_64", "renpy_spine_v1c.dll"))
+            loaded = load_library(os.path.join(renpy.config.gamedir, "spine", "native",
+                                               "windows-x86_64", windows_name))
         else:
-            raise RuntimeError("This adapter supports native Spine builds for Windows x64 and Android. "
-                               "Other platforms require compiling tools/spine/bridge.c for that platform.")
-    return _library
+            raise RuntimeError("This project includes native Spine builds for Windows x64 and Android. "
+                               "Other platforms require compiling the matching bridge for that platform.")
+        if loaded.spine_version != version:
+            raise RuntimeError('Spine native library version mismatch: ' + version)
+        _libraries[version] = loaded
+        if version == '3.8':
+            _library = loaded
+    return _libraries[version]
 
 
 def _read(path):
@@ -86,10 +95,43 @@ class _Control(renpy.python.RevertableObject):
         self.speed = 1.0
 
 
+class _MeshBuffers:
+    """Submit changed mesh streams, retaining owned byte snapshots for comparison."""
+    def __init__(self, layout, batch):
+        from renpy.gl2.gl2mesh2 import Mesh2
+        self.counts = (batch.vertices, batch.indices // 3)
+        self.mesh = Mesh2(layout, *self.counts)
+        self.geometry = self.attributes = self.triangles = None
+
+    def upload(self, batch):
+        # Mesh2 consumes Python sequences element by element. ctypes slices
+        # produce lists in C, avoiding per-element array/memoryview lookups in
+        # its setters. UV/tint and topology often stay identical across frames;
+        # compare complete bytes, since equal counts do not imply equal data.
+        geometry = C.string_at(batch.xy, batch.vertices * 8)
+        if geometry != self.geometry:
+            self.mesh.set_geometry_data(
+                (C.c_float * (batch.vertices * 2)).from_address(C.addressof(batch.xy.contents))[:])
+            self.geometry = geometry
+        attributes = C.string_at(batch.attributes, batch.vertices * 36)
+        if attributes != self.attributes:
+            self.mesh.set_attribute_data(
+                (C.c_float * (batch.vertices * 9)).from_address(C.addressof(batch.attributes.contents))[:])
+            self.attributes = attributes
+        triangles = C.string_at(batch.triangles, batch.indices * 4)
+        if triangles != self.triangles:
+            self.mesh.set_triangle_data(
+                (C.c_uint32 * batch.indices).from_address(C.addressof(batch.triangles.contents))[:])
+            self.triangles = triangles
+
+
 class _Session:
     def __init__(self, owner):
-        self.native = Native(library(), _read(owner.atlas), _read(owner.skeleton),
-                             owner.skeleton_scale, owner.skeleton.lower().endswith(".json"))
+        data = _read(owner.skeleton)
+        is_json = owner.skeleton.lower().endswith('.json')
+        version = runtime_version(skeleton_version(data, is_json))
+        self.native = Native(library(version), _read(owner.atlas), data,
+                             owner.skeleton_scale, is_json)
         folder = owner.atlas.rsplit("/", 1)[0]
         self.textures = [renpy.display.im.unoptimized_texture(renpy.easy.displayable(folder + "/" + page))
                          for page in self.native.pages]
@@ -100,25 +142,29 @@ class _Session:
         self.applied_overrides = set()
         self.pointer_overrides = {}
         self.stats = {}
-        self.native.lib.rsp_default_mix(self.native.handle, owner.default_mix)
+        self.native.default_mix(owner.default_mix)
 
     def sync(self, owner, st=None):
         control = owner.control
         if self.revision != control.revision:
-            self.native.lib.rsp_default_mix(self.native.handle, owner.default_mix)
+            self.native.default_mix(owner.default_mix)
             if control.skin:
                 self.native.skin(control.skin)
             for a, b, duration in control.mixes:
-                self.native.lib.rsp_mix(self.native.handle, a.encode("utf-8"), b.encode("utf-8"), duration)
+                self.native.mix(a, b, duration)
             if control.snapshot is not None:
                 self.native.restore(control.snapshot)
             else:
                 self.native.clear()
                 if owner.animation:
                     self.native.play(owner.animation, loop=owner.loop)
+            resume = getattr(owner, "_resume", None)
+            if resume and resume[0] == control.revision:
+                self.native.restore(resume[1])
+                owner._resume = None
             self.native.events()  # restoring a save does not repeat old events
             overrides = dict(control.overrides)
-            for name in self.applied_overrides - set(overrides):
+            for name in (self.applied_overrides | set(self.native.overrides)) - set(overrides) - set(self.pointer_overrides):
                 self.native.override(name)
             for name, values in overrides.items():
                 fields = dict(values)
@@ -129,11 +175,8 @@ class _Session:
                     self.native.override(name, **values)
             self.applied_overrides = set(overrides)
             self.last_st = control.anchor if control.anchor is not None else owner._started_st
-            resume = getattr(owner, "_resume", None)
             if resume and resume[0] == control.revision:
-                self.native.restore(resume[1])
                 self.last_st = resume[2]
-                owner._resume = None
             self.revision = control.revision
         if st is not None:
             if owner._started_st is None:
@@ -158,7 +201,7 @@ class _Session:
 
 
 class Spine(Displayable):
-    """A Spine 3.8 skeleton, animated live by the official C runtime.
+    """A Spine 3.8 or 4.0-4.3 skeleton, animated live by its official runtime.
 
     ``size`` is a fixed Ren'Py canvas. ``origin`` is the canvas coordinate of
     Spine (0, 0). ``zoom`` is independent of the skeleton export scale.
@@ -237,8 +280,7 @@ class Spine(Displayable):
         if not math.isfinite(duration) or duration < 0:
             raise ValueError("Mix duration must be nonnegative")
         session = self._session()
-        if not session.native.lib.rsp_mix(session.native.handle, before.encode("utf-8"), after.encode("utf-8"), duration):
-            raise ValueError("Unknown animation in mix")
+        session.native.mix(before, after, duration)
         mixes = {(a,b):d for a,b,d in self.control.mixes}
         mixes[before, after] = duration
         self.control.mixes = tuple((a,b,d) for (a,b),d in mixes.items())
@@ -337,7 +379,6 @@ class Spine(Displayable):
             _layout.add_attribute("a_tex_coord", 2)
             _layout.add_attribute("a_rsp_light", 4)
             _layout.add_attribute("a_rsp_dark", 3)
-        from renpy.gl2.gl2mesh2 import Mesh2
         session = self._session()
         session.sync(self, st)
         batches = session.native.draw(self.zoom, self.origin)
@@ -349,20 +390,13 @@ class Spine(Displayable):
             if index >= len(session.meshes):
                 session.meshes.append(None)
             cached = session.meshes[index]
-            if cached is None or cached[0] != counts:
-                cached = (counts, Mesh2(_layout, *counts))
+            if cached is None or cached.counts != counts:
+                cached = _MeshBuffers(_layout, batch)
                 session.meshes[index] = cached
-            mesh = cached[1]
-            geometry, attributes, triangles = array.array("f"), array.array("f"), array.array("I")
-            geometry.frombytes(C.string_at(batch.xy, batch.vertices * 2 * 4))
-            attributes.frombytes(C.string_at(batch.attributes, batch.vertices * 9 * 4))
-            triangles.frombytes(C.string_at(batch.triangles, batch.indices * 4))
-            mesh.set_geometry_data(geometry)
-            mesh.set_attribute_data(attributes)
-            mesh.set_triangle_data(triangles)
+            cached.upload(batch)
             model = Render(*self.size)
             model.blit(textures[batch.page], (0, 0), focus=False)
-            model.mesh = mesh
+            model.mesh = cached.mesh
             model.add_shader("renpy.texture")
             model.add_shader("renpy_spine.tint")
             blend = ("normal", "add", "multiply", "screen")[batch.blend]
