@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1
+
+- 插件入口、Python 模块、原生库、工具与自制示例集中在 game/spine；通过 Ren’Py 官方目录注册接口加载 Python，保留现有 Spine API 和模块名。
+- 安装包解压后只有 spine 文件夹，文档与全部许可随该文件夹一起安装；不向项目根目录或其他 game 子目录复制文件。
+- 新增 Windows + Android 的 all.zip 合包，平台单独包继续提供。
+- 自制示例随插件安装，仅在 call renpy_spine_example 时创建角色，不占用 start 标签。
+- 更新 CI 路径、单目录安装检查和从 v0.2.0 升级的清理说明。
+
 ## 0.2.0
 
 - 支持 Spine 3.8、4.0、4.1、4.2、4.3，自动按 JSON / SKEL 文件内部版本选择匹配的官方运行时。

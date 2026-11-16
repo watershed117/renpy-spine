@@ -12,7 +12,7 @@ import sys
 import time
 
 ROOT = Path(__file__).resolve().parents[1] / 'game'
-sys.path.insert(0, str(ROOT / 'python-packages'))
+sys.path.insert(0, str(ROOT / 'spine/python'))
 from renpy_spine.native import Native, load_library, skeleton_version, runtime_version
 
 
@@ -126,14 +126,14 @@ def run():
         lib = load_library(ROOT / 'spine/native/windows-x86_64' /
                            ('renpy_spine_%s.dll' % version.replace('.', '_')))
         cases = {}
-        for path in sorted((ROOT / 'tools/spine/fixtures' / version).glob('*/export/*')):
+        for path in sorted((ROOT / 'spine/tools/fixtures' / version).glob('*/export/*')):
             if path.suffix in ('.skel', '.json'):
                 print(version, path.parent.parent.name, path.name, flush=True)
-                cases[str(path.relative_to(ROOT / 'tools/spine/fixtures' / version))] = fixture_check(version, lib, path)
+                cases[str(path.relative_to(ROOT / 'spine/tools/fixtures' / version))] = fixture_check(version, lib, path)
         report['versions'][version] = cases
     # Native version mismatches fail before any binary decoding occurs.
     for version in ('4.0', '4.1', '4.2', '4.3'):
-        folder = ROOT / 'tools/spine/fixtures' / version / 'spineboy/export'
+        folder = ROOT / 'spine/tools/fixtures' / version / 'spineboy/export'
         try:
             Native(lib, (folder / 'spineboy.atlas').read_bytes(), (folder / 'spineboy-pro.skel').read_bytes())
         except ValueError:
@@ -160,7 +160,7 @@ def run():
         try:
             for version in ('3.8', '4.0', '4.1', '4.2', '4.3'):
                 path = ('spine/assets/spr/CH0095_spr.skel' if version == '3.8' else
-                        'tools/spine/fixtures/%s/spineboy/export/spineboy-pro.skel' % version)
+                        'spine/tools/fixtures/%s/spineboy/export/spineboy-pro.skel' % version)
                 atlas_path = None if version == '3.8' else path.rsplit('/', 1)[0] + '/spineboy.atlas'
                 actor = Spine(path, atlas=atlas_path)
                 name = next(iter(actor.animations))

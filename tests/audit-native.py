@@ -82,8 +82,8 @@ def main():
     report = {'sources': {}, 'libraries': {}}
     for version in VERSIONS:
         suffix = '' if version == '3.8' else '-' + version
-        lock = json.loads((ROOT / ('game/tools/spine/runtime-lock%s.json' % suffix)).read_text())
-        vendor = ROOT / ('game/tools/spine/vendor' + suffix)
+        lock = json.loads((ROOT / ('game/spine/tools/runtime-lock%s.json' % suffix)).read_text())
+        vendor = ROOT / ('game/spine/tools/vendor' + suffix)
         for relative, expected in lock['files'].items():
             assert hashlib.sha256((vendor / relative).read_bytes()).hexdigest() == expected, (version, relative)
         report['sources'][version] = {'revision': lock['revision'], 'unchanged_files': len(lock['files'])}

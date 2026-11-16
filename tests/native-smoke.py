@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / 'game/python-packages'))
+sys.path.insert(0, str(ROOT / 'game/spine/python'))
 from renpy_spine.native import Native, load_library
 
 
@@ -25,7 +25,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--library', type=Path, default=ROOT / 'game/spine/native/windows-x86_64/renpy_spine_v1c.dll')
     args = parser.parse_args()
-    sample = ROOT / 'examples/game/spine/assets/adapter_sample/sample'
+    sample = ROOT / 'game/spine/assets/adapter_sample/sample'
     lib = load_library(args.library)
     atlas = sample.with_suffix('.atlas').read_bytes()
     skeleton = sample.with_suffix('.json').read_bytes()

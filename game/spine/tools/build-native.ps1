@@ -9,7 +9,7 @@ $taskRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $sourceLock = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'runtime-lock.json') | ConvertFrom-Json
 foreach ($entry in $sourceLock.files.PSObject.Properties) {
     $sourcePath = Join-Path $PSScriptRoot ('vendor\' + $entry.Name)
-    if (-not (Test-Path -LiteralPath $sourcePath)) { throw 'Run node tools/spine/fetch-runtime.cjs from game before building.' }
+    if (-not (Test-Path -LiteralPath $sourcePath)) { throw 'Run node spine/tools/fetch-runtime.cjs from game before building.' }
     if ((Get-FileHash -LiteralPath $sourcePath -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value) {
         throw ('Runtime source checksum mismatch: ' + $entry.Name)
     }

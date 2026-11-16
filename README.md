@@ -8,14 +8,35 @@ Git 仓库与源码 ZIP 不内置官方运行时源码或编译产物。Release 
 
 ## 下载 Release
 
-在仓库的 Releases 页面选择 `v0.2.0` 或后续版本：
+在仓库的 Releases 页面选择 `v0.2.1` 或后续版本：
 
+- **推荐：`renpy-spine-v*-all.zip`**：Windows x64 + Android 三种 ABI，包含全部五个版本后端。
 - `renpy-spine-v*-windows-x86_64.zip`：Python/Ren’Py 接入代码、五个 DLL、自制示例及许可。
 - `renpy-spine-v*-android.zip`：接入代码、三种 ABI 各五个 SO、APK/AAB 注入工具及许可。
 - `renpy-spine-v*-source.zip`：完整适配源码、固定源码清单、构建工具与 CI；需要自行下载官方源码并编译。
 - `SHA256SUMS.txt` 和 `release-manifest.json`：校验附件及查看完整文件列表。
 
-安装时把对应 ZIP 中的 `game` 内容合并到自己的 Ren’Py 项目 `game`，并保留许可和 NOTICE。Android 包仍需先由 Ren’Py/RAPT 构建，再用注入工具加入原生库。详见 [构建说明](docs/BUILDING.md)。
+**解压安装包，把唯一的 `spine` 文件夹复制到自己项目的 `game` 中即可。**文档、许可、示例和工具都随 `spine` 安装；不需要覆盖 `script.rpy`、`screens.rpy`、`options.rpy` 或合并 `python-packages`。
+
+```text
+你的项目/
+└── game/
+    ├── script.rpy              # 原有游戏文件
+    ├── screens.rpy
+    └── spine/                 # 把这个文件夹复制进来
+        ├── spine_runtime.rpy
+        ├── example.rpy
+        ├── python/renpy_spine/
+        ├── native/
+        ├── assets/adapter_sample/
+        ├── tools/package-android.py
+        ├── docs/
+        └── LICENSE、NOTICE 等许可文件
+```
+
+在自己的剧情中写 `call renpy_spine_example` 可运行附带的方块与指针示例。示例仅在调用时创建角色，不占用 `start` 标签。Spine 版本仍自动识别。
+
+从 v0.2.0 升级前，请按 [安装与升级](docs/INSTALLING.md) 清理旧的入口和 Python 包；保留自己的模型资源。Android 仍需先由 Ren’Py/RAPT 构建，再执行随包工具。详见 [构建说明](docs/BUILDING.md)。
 
 ## 使用许可
 
@@ -43,10 +64,10 @@ Git 仓库与源码 ZIP 不内置官方运行时源码或编译产物。Release 
 1. 在满足许可条件的前提下，下载并校验固定版本的官方 C 运行时：
 
    ```powershell
-   node .\game\tools\spine\fetch-runtime.cjs
-   node .\game\tools\spine\fetch-runtime.cjs --verify
-   node .\game\tools\spine\fetch-multiversion.cjs
-   node .\game\tools\spine\fetch-multiversion.cjs --verify
+   node .\game\spine\tools\fetch-runtime.cjs
+   node .\game\spine\tools\fetch-runtime.cjs --verify
+   node .\game\spine\tools\fetch-multiversion.cjs
+   node .\game\spine\tools\fetch-multiversion.cjs --verify
    ```
 
    若本机通过 Windows 系统证书信任网络代理，可在支持该选项的新版 Node.js 上使用 `node --use-system-ca ...`；请保留 TLS 证书校验。
@@ -54,19 +75,19 @@ Git 仓库与源码 ZIP 不内置官方运行时源码或编译产物。Release 
 2. 编译 Windows 动态库：
 
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\game\tools\spine\build-native.ps1 -Target windows
-   powershell -ExecutionPolicy Bypass -File .\game\tools\spine\build-multiversion.ps1 -Target windows
+   powershell -ExecutionPolicy Bypass -File .\game\spine\tools\build-native.ps1 -Target windows
+   powershell -ExecutionPolicy Bypass -File .\game\spine\tools\build-multiversion.ps1 -Target windows
    ```
 
-3. 把本仓库 `game` 目录的内容合并到你的 Ren’Py 项目 `game` 中，包括生成的 `spine/native` 与全部 `spine/*LICENSE.txt`。同时在游戏文档中保留根目录 [NOTICE](NOTICE) 和许可说明。不要把仓库根目录作为普通子目录放进现有 `game`，Ren’Py 会递归加载 `.rpy`。
+3. 把本仓库的 `game/spine` 文件夹复制到项目的 `game`。生成的 `native`、Python 模块、入口和示例都在该文件夹内。自行从源码复制时，还需把根目录的 LICENSE、NOTICE、LICENSES 和 docs 复制到该 `spine` 文件夹；Release 安装包已做好这一步。不要把仓库根目录作为普通子目录放进现有 `game`，Ren’Py 会递归加载 `.rpy`。
 
-4. 可选：把 `examples/game` 的内容也合并到游戏的 `game` 目录，在剧情里调用：
+4. 可选：在剧情里调用已随插件安装的示例：
 
    ```renpy
    call renpy_spine_example
    ```
 
-   示例窗口显示旋转方块：按住方块触发动画，指针标记平滑跟随鼠标。也可切换触摸范围显示与追踪。示例使用自己的 screen，不覆盖你的 `start` 标签。
+   示例窗口显示旋转方块：按住方块触发动画，指针标记平滑跟随鼠标。也可切换触摸范围显示与追踪。
 
 Windows 构建产物包括 `renpy_spine_v1c.dll` 及 `renpy_spine_4_0.dll` 至 `renpy_spine_4_3.dll`，放在 `game/spine/native/windows-x86_64`。升级插件和原生库后，请完全退出旧游戏进程。
 
@@ -93,9 +114,9 @@ label show_actor:
 ## Android
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\game\tools\spine\build-native.ps1 -Target android -Ndk 'C:\Android\android-ndk-r28c'
-powershell -ExecutionPolicy Bypass -File .\game\tools\spine\build-multiversion.ps1 -Target android -Ndk 'C:\Android\android-ndk-r28c'
-python .\game\tools\spine\package-android.py 'C:\build\your-game.apk' --renpy-sdk 'C:\RenPySDK'
+powershell -ExecutionPolicy Bypass -File .\game\spine\tools\build-native.ps1 -Target android -Ndk 'C:\Android\android-ndk-r28c'
+powershell -ExecutionPolicy Bypass -File .\game\spine\tools\build-multiversion.ps1 -Target android -Ndk 'C:\Android\android-ndk-r28c'
+python .\game\spine\tools\package-android.py 'C:\build\your-game.apk' --renpy-sdk 'C:\RenPySDK'
 ```
 
 先通过 Ren’Py / RAPT 正常生成 APK / AAB，再执行注入工具。发布生成的 `*-spine.apk` / `*-spine.aab`。签名与验证参数见 [构建说明](docs/BUILDING.md)。
@@ -104,7 +125,7 @@ python .\game\tools\spine\package-android.py 'C:\build\your-game.apk' --renpy-sd
 
 ```powershell
 python .\tests\native-smoke.py
-node .\game\tools\spine\fetch-multiversion.cjs --fixtures
+node .\game\spine\tools\fetch-multiversion.cjs --fixtures
 python .\tests\native-multiversion.py
 python .\tests\audit-native.py
 python .\tests\android-package.py

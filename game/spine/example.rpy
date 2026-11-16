@@ -1,15 +1,7 @@
 # Original geometric example; see LICENSE and NOTICE at repository root.
-# Copy examples/game into your project's game after installing the adapter.
-default spine_example_actor = Spine(
-    "spine/assets/adapter_sample/sample.json",
-    animation="idle", size=(960, 540), origin=(480, 270), zoom=2.0)
+# Only creates the sample actor when the example label is called.
 
-default spine_example_input = SpineInteraction(spine_example_actor,
-    regions=(TouchRegion("box", "body", (45.0, 45.0),
-        press=("touch",), release=("touch_end",), tracks=(3,)),),
-    bindings=(PointerBinding("pointer", "root", (240.0, 135.0), (100.0, 55.0)),))
-
-screen renpy_spine_example_screen():
+screen renpy_spine_example_screen(spine_example_input):
     modal True
     add Solid("#152436")
     add spine_example_input xalign 0.5 yalign 0.5
@@ -31,5 +23,10 @@ screen renpy_spine_example_screen():
     on "hide" action Function(spine_example_input.cancel)
 
 label renpy_spine_example:
-    call screen renpy_spine_example_screen
+    call screen renpy_spine_example_screen(SpineInteraction(
+        Spine("spine/assets/adapter_sample/sample.json",
+            animation="idle", size=(960, 540), origin=(480, 270), zoom=2.0),
+        regions=(TouchRegion("box", "body", (45.0, 45.0),
+            press=("touch",), release=("touch_end",), tracks=(3,)),),
+        bindings=(PointerBinding("pointer", "root", (240.0, 135.0), (100.0, 55.0)),)))
     return

@@ -14,7 +14,7 @@ foreach ($version in $Versions) {
     $sourceLock = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot "runtime-lock-$version.json") | ConvertFrom-Json
     foreach ($entry in $sourceLock.files.PSObject.Properties) {
         $sourcePath = Join-Path $vendor $entry.Name
-        if (-not (Test-Path -LiteralPath $sourcePath)) { throw 'Run node game/tools/spine/fetch-multiversion.cjs before building.' }
+        if (-not (Test-Path -LiteralPath $sourcePath)) { throw 'Run node game/spine/tools/fetch-multiversion.cjs before building.' }
         if ((Get-FileHash -LiteralPath $sourcePath -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.Value) {
             throw "Runtime $version checksum mismatch: $($entry.Name)"
         }

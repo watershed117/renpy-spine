@@ -5,7 +5,7 @@ import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location('package_android', ROOT / 'game/tools/spine/package-android.py')
+spec = importlib.util.spec_from_file_location('package_android', ROOT / 'game/spine/tools/package-android.py')
 package = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(package)
 

@@ -63,7 +63,7 @@ def library(version='3.8'):
                     loaded = load_library(os.path.join(folder, android_name))
                 except OSError as error:
                     raise RuntimeError("Spine native library is missing from this APK. "
-                                       "Run tools/spine/package-android.py after the Ren'Py Android build.") from error
+                                       "Run spine/tools/package-android.py after the Ren'Py Android build.") from error
         elif renpy.windows:
             loaded = load_library(os.path.join(renpy.config.gamedir, "spine", "native",
                                                "windows-x86_64", windows_name))

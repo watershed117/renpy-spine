@@ -15,7 +15,7 @@ The downloader retrieves pinned sources from Esoteric Software's repository:
 77a5db0ec6d16331f5efbaa7662bba9355bd3424 (4.1).
 5cb78e77d3711ddcd80c7bd043bb11cf70fcc88c (4.2).
 405f43295b5832e86d9df3a80beb6bc9df772312 (4.3, C++).
-File hashes are recorded in game/tools/spine/runtime-lock*.json.
+File hashes are recorded in game/spine/tools/runtime-lock*.json.
 The original May 1, 2019 license is preserved in LICENSES/Spine-Runtimes-3.8.txt.
 The official current license retrieved November 14, 2026 is preserved in LICENSE.
 See docs/LICENSING.md for the different scope of these documents.

@@ -6,8 +6,8 @@
 
 1. Windows 作业安装 MinGW-w64，下载并校验五个固定版本源码，编译五个 DLL。使用自制 3.8 数据及 58 个官方 JSON/SKEL 检查播放、事件、队列、多轨、骨骼覆盖和存档恢复，再检查 PE 架构及动态依赖。
 2. Android 作业固定使用 NDK r28c `28.2.13676358`，分别编译 arm64-v8a、armeabi-v7a、x86_64 的五个后端。检查全部 15 个 ELF 的 CPU 架构、16 KB 加载对齐与依赖，并用四种模拟 APK/AAB 布局检查注入逻辑。
-3. 两个作业成功后，打包作业生成源码、Windows x64、Android ZIP，以及 SHA-256 和文件清单。打包使用明确的文件白名单；不包含本地游戏资源、官方示例、下载的 vendor、工具链、密钥或缓存。固定输入的 ZIP 使用固定时间戳和文件顺序。
-4. 仅标签推送会进入 Release 作业。标签必须等于 `v` 加 `VERSION`。作业先创建草稿，上传并校验五个附件后公开；发生错误时保持草稿。不会覆盖内容不同的已发布附件，应使用新版本。
+3. 两个作业成功后，打包作业生成源码、Windows x64、Android 与 all 合包 ZIP，以及 SHA-256 和文件清单。安装包仅包含 spine 文件夹；安装检查将其解压到模拟已有项目，核对原项目文件未被改动。打包使用明确的文件白名单；不包含本地游戏资源、官方示例、下载的 vendor、工具链、密钥或缓存。固定输入的 ZIP 使用固定时间戳和文件顺序。
+4. 仅标签推送会进入 Release 作业。标签必须等于 `v` 加 `VERSION`。作业先创建草稿，上传并校验六个附件后公开；发生错误时保持草稿。不会覆盖内容不同的已发布附件，应使用新版本。
 
 每次正常构建可在 Actions 的 artifacts 下载 `release-assets`；Windows/Android 原生库和检查报告也分别保留。该流程发布的是插件安装包，不是已签名游戏 APK，也不使用你的 Android 签名密钥。
 
@@ -28,13 +28,13 @@ git push origin v0.3.0
 ## 本地复现
 
 ```powershell
-node game/tools/spine/fetch-runtime.cjs
-node game/tools/spine/fetch-multiversion.cjs
-node game/tools/spine/fetch-multiversion.cjs --fixtures
-./game/tools/spine/build-native.ps1 -Target windows
-./game/tools/spine/build-multiversion.ps1 -Target windows
-./game/tools/spine/build-native.ps1 -Target android -Ndk 'C:/Android/android-ndk-r28c'
-./game/tools/spine/build-multiversion.ps1 -Target android -Ndk 'C:/Android/android-ndk-r28c'
+node game/spine/tools/fetch-runtime.cjs
+node game/spine/tools/fetch-multiversion.cjs
+node game/spine/tools/fetch-multiversion.cjs --fixtures
+./game/spine/tools/build-native.ps1 -Target windows
+./game/spine/tools/build-multiversion.ps1 -Target windows
+./game/spine/tools/build-native.ps1 -Target android -Ndk 'C:/Android/android-ndk-r28c'
+./game/spine/tools/build-multiversion.ps1 -Target android -Ndk 'C:/Android/android-ndk-r28c'
 python tests/native-smoke.py
 python tests/native-multiversion.py
 python tests/audit-native.py

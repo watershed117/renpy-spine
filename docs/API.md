@@ -1,6 +1,6 @@
 # 动画、输入与事件
 
-`spine_runtime.rpy` 向 Ren’Py store 注册 `Spine`、`SpineInteraction`、`TouchRegion` 和 `PointerBinding`。先安装 Release 或完成 README 中的源码构建。3.8、4.0、4.1、4.2、4.3 共用相同 API，按资源内部版本自动选择后端。
+`game/spine/spine_runtime.rpy` 向 Ren’Py store 注册 `Spine`、`SpineInteraction`、`TouchRegion` 和 `PointerBinding`。先把 Release 的 spine 文件夹复制到 game，或完成 README 中的源码构建。3.8、4.0、4.1、4.2、4.3 共用相同 API，按资源内部版本自动选择后端。Python 位于 spine/python，通过 Ren’Py 官方目录接口导入，模块名仍为 renpy_spine。
 
 ## Spine
 

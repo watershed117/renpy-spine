@@ -1,8 +1,8 @@
 # Generated runtime sources and native builds are fetched/built locally.
-game/tools/spine/vendor/
-game/tools/spine/vendor-*/
-game/tools/spine/fixtures/
-game/tools/spine/toolchains/
+game/spine/tools/vendor/
+game/spine/tools/vendor-*/
+game/spine/tools/fixtures/
+game/spine/tools/toolchains/
 game/spine/native/
 game/.spine-check/
 game/cache/
